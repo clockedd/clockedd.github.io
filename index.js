@@ -248,30 +248,33 @@ function renderAlarmList() {
     return;
   }
 
-  list.innerHTML = state.alarms.map(alarm => {
-    // FR5: recurring badge
-    const recurBadge = alarm.days.length
-      ? `<span class="alarm-card-recurring">↻ ${alarm.days.join(' ')}</span>`
-      : '';
-    // FR7: label shown on card
-    const labelLine = alarm.label
-      ? `<div class="alarm-card-label">${alarm.label}</div>`
-      : '';
+  const sortedAlarms = [...state.alarms].sort((a, b) => {
+  return a.time.localeCompare(b.time);
+});
 
-    return `
-    <div class="alarm-card" data-id="${alarm.id}">
-      <div>
-        ${labelLine}
-        <div class="alarm-card-time">${formatTime(alarm.time)}</div>
-        <div class="alarm-card-meta">${alarm.game} · ${alarm.tone}</div>
-        ${recurBadge}
-      </div>
-      <div class="alarm-card-actions">
-        <button class="card-action-btn" onclick="testAlarm(${alarm.id})">Test</button>
-        <button class="card-action-btn" onclick="deleteAlarm(${alarm.id})">Delete</button>
-      </div>
-    </div>`;
-  }).join('');
+list.innerHTML = sortedAlarms.map(alarm => {
+  const recurBadge = alarm.days.length
+    ? `<span class="alarm-card-recurring">↻ ${alarm.days.join(' ')}</span>`
+    : '';
+
+  const labelLine = alarm.label
+    ? `<div class="alarm-card-label">${alarm.label}</div>`
+    : '';
+
+  return `
+  <div class="alarm-card" data-id="${alarm.id}">
+    <div>
+      ${labelLine}
+      <div class="alarm-card-time">${formatTime(alarm.time)}</div>
+      <div class="alarm-card-meta">${alarm.game} · ${alarm.tone}</div>
+      ${recurBadge}
+    </div>
+    <div class="alarm-card-actions">
+      <button class="card-action-btn" onclick="testAlarm(${alarm.id})">Test</button>
+      <button class="card-action-btn" onclick="deleteAlarm(${alarm.id})">Delete</button>
+    </div>
+  </div>`;
+}).join('');
 }
 
 function deleteAlarm(id) {
@@ -948,7 +951,7 @@ function showToast(msg) {
 }
 
 /* ==============================
-   INIT
+   INITIAL
    ============================== */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -1040,5 +1043,3 @@ document.addEventListener('DOMContentLoaded', () => {
   // save alarm (FR1)
   document.getElementById('save-alarm-btn')?.addEventListener('click', saveAlarm);
 });
-
-// give-up button logic is initialized inside startCrossword()
