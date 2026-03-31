@@ -182,16 +182,17 @@ function saveAlarm() {
   const toneBtn = document.querySelector('#setalarm-ringtone-list .ringtone-btn.active');
   const tone = toneBtn ? toneBtn.dataset.tone : state.ringtone;
 
-  const alarm = {
-    id:           Date.now(),
-    label:        labelInput?.value.trim() || '',   // FR7: optional name
-    time:         timeInput.value,
-    days:         selectedDays,                      // FR5: recurring
-    game:         activeGame ? activeGame.dataset.game : 'wordle', // FR2: default wordle
-    tone:         tone,                              // FR1: per-alarm sound
-    enabled:      true,
-    rewardImage:  state.pendingImage || null,        // FR3
-  };
+	const alarm = {
+	  id: Date.now(),
+	  label: labelInput?.value.trim() || '',
+	  time: timeInput.value,
+	  days: selectedDays,
+	  game: activeGame ? activeGame.dataset.game : 'wordle',
+	  tone: tone,
+	  enabled: true,
+	  rewardImage: state.pendingImage || null,
+	  lastTriggered: null
+	};
 
   state.alarms.push(alarm);
   localStorage.setItem('alarms', JSON.stringify(state.alarms));
@@ -981,26 +982,30 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
 	// alarm triggers on time
-setInterval(() => {
-  const now = new Date();
-  const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-  const today = ['Su','Mo','Tu','We','Th','Fr','Sa'][now.getDay()];
+	setInterval(() => {
+	  const now = new Date();
+	  const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+	  const today = ['Su','Mo','Tu','We','Th','Fr','Sa'][now.getDay()];
+	  const todayDate = now.toDateString();
 
-  state.alarms.forEach(alarm => {
-    if (!alarm.enabled) return;
-    if (alarm.time !== currentTime) return;
+	  state.alarms.forEach(alarm => {
+		if (!alarm.enabled) return;
+		if (alarm.time !== currentTime) return;
 
-    // Check day restriction — if days set, must match today
-    if (alarm.days.length > 0 && !alarm.days.includes(today)) return;
+		if (alarm.days.length > 0 && !alarm.days.includes(today)) return;
+		if (alarm.lastTriggered === todayDate) return;
+		if (state.activeAlarm?.id === alarm.id) return;
 
-    // Don't re-trigger if already active
-    if (state.activeAlarm?.id === alarm.id) return;
+		// dont trigger if alr triggered
+		alarm.lastTriggered = todayDate;
+		localStorage.setItem('alarms', JSON.stringify(state.alarms));
 
-    state.activeAlarm = alarm;
-    if (alarm.game === 'wordle') startWordle();
-    else startCrossword();
-  });
-}, 10000); // checks every 10 seconds
+		state.activeAlarm = alarm;
+
+		if (alarm.game === 'wordle') startWordle();
+		else startCrossword();
+	  });
+	}, 10000); // check for time every 10s
 
   // profile ringtone (default)
   document.querySelectorAll('#ringtone-list .ringtone-btn').forEach(btn => {
