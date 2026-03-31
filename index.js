@@ -1,39 +1,4 @@
 // index.js
-/*
-PROJECT DESCRIPTION:
-Prototype of a functioning alarm app by Dina Nguyen
-Idea by Team Sleep.
-
-FUNCTIONS:
-Allow for user input name for homescreen greeting
-View alarms button (current set alarms and test button for each)
-Set new alarm button (creates new alarm)
-	- Select time
-	- Select day(s)
-	- Select crossword vs. wordle
-	- Select difficulty (still considering if to add this)
-	- Insert user selected image from gallery
-	- Set alarm button (sends it to view all alarms)
-	
-Navbar
-	- Consistently at bottom (similar to apps)
-	
-Alarm
-	- Plays a sound
-	- User interaction for 2+ minutes will muffle sound
-	- Completion screen (user hits ok to return home)
-	
-Wordle
-	- Has a keyboard so user can see which letters are in correct place
-	- Cannot guess words that aren't real
-	- For prototype only going to have a database of 5 words
-	- 1:1 with the newyorktimes Wordle UI except with our color palette
-	
-Crossword 
-	- Database of 2 puzzle sets
-	- Hints are small on the top of screen
-	- Doesn't need keyboard
- */
 
 /* ==============================
    WORD BANKS
@@ -41,31 +6,9 @@ Crossword
 
 // possible answers
 const WORDLE_ANSWERS = ['TEACH', 'LEARN', 'SLEEP', 'AWAKE', 'CLOCK'];
-
-/*
-
-  Grid (. = blocked):
-        col: 0  1  2  3  4
-  row 0:     S  L  E  E  P    ← 1-across: SLEEP
-  row 1:     O  .  .  .  .
-  row 2:     L  .  .  .  .
-  row 3:     A  .  .  .  .
-  row 4:     R  .  .  .  .
-
-  2-down: SOLAR  col 0, rows 0-4  → (0,0)='S' matches SLEEP[0]='S' ✓
-
-  3-across: BED  row 2, cols 2-4  → no intersection with existing cells ✓
-
-         col: 0  1  2  3  4
-  row 0:      S  L  E  E  P
-  row 1:      O  .  .  .  .
-  row 2:      L  .  B  E  D    ← 3-across: BED (starts col 2)
-  row 3:      A  .  .  .  .
-  row 4:      R  .  .  .  .
-*/
 const CROSSWORD_PUZZLES = [
   {
-    name: "Morning Puzzle",
+    name: "Crossword",
     rows: 5,
     cols: 5,
     entries: [
@@ -74,6 +17,16 @@ const CROSSWORD_PUZZLES = [
       { word: "BED",   row: 2, col: 2, direction: "across", clue: "Where you wake up from", number: 3 },
     ],
   },
+	{
+	  name: "Crossword",
+	  rows: 5,
+	  cols: 5,
+	  entries: [
+	    { word: "AWAKE", row: 0, col: 0, direction: "across", clue: "No longer sleeping", number: 1 },
+	    { word: "ALARM", row: 0, col: 0, direction: "down",   clue: "What wakes you up", number: 2 },
+	    { word: "RISE", row: 2, col: 1, direction: "across", clue: "Get out of bed", number: 3 },
+	  ],
+	}
 ];
 
 /* ==============================
@@ -630,7 +583,7 @@ document.addEventListener('keydown', (e) => {
    ============================== */
 
 function startCrossword() {
-  const puzzle = CROSSWORD_PUZZLES[0];
+  const puzzle = CROSSWORD_PUZZLES[Math.floor(Math.random() * CROSSWORD_PUZZLES.length)];
 
   const rows = puzzle.rows;
   const cols = puzzle.cols;
@@ -998,7 +951,7 @@ function showToast(msg) {
    ============================== */
 
 document.addEventListener('DOMContentLoaded', () => {
-
+	
   // FR6: live clock
   updateClock();
   setInterval(updateClock, 1000);
@@ -1026,6 +979,28 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('theme-toggle')?.addEventListener('change', (e) => {
     applyTheme(e.target.checked ? 'light' : 'dark');
   });
+
+	// alarm triggers on time
+setInterval(() => {
+  const now = new Date();
+  const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  const today = ['Su','Mo','Tu','We','Th','Fr','Sa'][now.getDay()];
+
+  state.alarms.forEach(alarm => {
+    if (!alarm.enabled) return;
+    if (alarm.time !== currentTime) return;
+
+    // Check day restriction — if days set, must match today
+    if (alarm.days.length > 0 && !alarm.days.includes(today)) return;
+
+    // Don't re-trigger if already active
+    if (state.activeAlarm?.id === alarm.id) return;
+
+    state.activeAlarm = alarm;
+    if (alarm.game === 'wordle') startWordle();
+    else startCrossword();
+  });
+}, 10000); // checks every 10 seconds
 
   // profile ringtone (default)
   document.querySelectorAll('#ringtone-list .ringtone-btn').forEach(btn => {
