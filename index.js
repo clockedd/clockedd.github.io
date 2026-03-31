@@ -39,7 +39,14 @@ Crossword
    WORD BANKS
    ============================== */
 
-const WORDLE_WORDS = ['ANGEL', 'PRINCE', 'SLEEP', 'AWAKE', 'CLOCK'];
+// possible answers
+const WORDLE_ANSWERS = ['ANGEL', 'PRINCE', 'SLEEP', 'AWAKE', 'CLOCK'];
+
+// valid guesses
+const VALID_WORDS = [
+  'ANGEL','PRINCE','SLEEP','AWAKE','CLOCK',
+  'CRANE','SLATE','AUDIO','PLANT','BRICK','STONE','LIGHT'
+];
 
 /*
 
@@ -421,7 +428,7 @@ function confirmAbandonGame() {
    ============================== */
 
 function startWordle() {
-  const word = WORDLE_WORDS[Math.floor(Math.random() * WORDLE_WORDS.length)];
+  const word = WORDLE_ANSWERS[Math.floor(Math.random() * WORDLE_ANSWERS.length)];
   state.wordle = {
     answer:       word,
     maxGuesses:   6,
@@ -523,10 +530,12 @@ function submitWordleGuess() {
     shakeCurrentRow(); setWordleMessage(`Need ${len} letters`); return;
   }
 
-  const guess = wl.currentGuess.join('');
-  if (!WORDLE_WORDS.includes(guess)) {
-    shakeCurrentRow(); setWordleMessage('Not in word list'); return;
-  }
+	const guess = wl.currentGuess.join('');
+	
+	if (!/^[A-Z]+$/.test(guess)) {
+	  setWordleMessage('Only letters allowed');
+	  return;
+	}
 
   const result = scoreWordleGuess(guess, wl.answer);
   const rowIdx = wl.guesses.length;
